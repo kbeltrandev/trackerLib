@@ -23,7 +23,7 @@ class TrackerService : Service() {
 
     private var handler: Handler? = null
     private var runnable: Runnable? = null
-    private lateinit var uuid : UUID
+    private lateinit var appUUID: String
 
     inner class TestServiceBinder : Binder() {
         val service: TrackerService
@@ -37,14 +37,14 @@ class TrackerService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        appUUID = intent!!.getStringExtra("trackerAppUUID")
         resume()
         return START_STICKY
     }
 
     override fun onCreate() {
         super.onCreate()
-        uuid = UUID.randomUUID()
-        runnable = Runnable { testRunnable() }
+        runnable = Runnable { getLastLocation() }
         handler = Handler()
     }
 
@@ -60,8 +60,7 @@ class TrackerService : Service() {
     }
 
     @SuppressLint("MissingPermission")
-    private fun testRunnable() {
-
+    private fun getLastLocation() {
         val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         var lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
         if (lastLocation == null) lastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
@@ -79,13 +78,12 @@ class TrackerService : Service() {
         val gpsDataPayload  = GpsDataPayload()
         gpsDataPayload.lat = lastLocation.latitude
         gpsDataPayload.lon = lastLocation.longitude
-        gpsDataPayload.uid = uuid.toString()
+        gpsDataPayload.uid = appUUID
 
         val call = TrackerApi.create().sendGpsPayload(gpsDataPayload)
         call.enqueue(object : Callback<TrackerResponse> {
             override fun onResponse(call: Call<TrackerResponse>, response: Response<TrackerResponse>) {
-                if (response?.code() == HttpURLConnection.HTTP_OK) {
-                    Log.i("POST ON DB", "SERVICE REQUEST : 200")
+                if (response.code() == HttpURLConnection.HTTP_OK) {
                 }
             }
             override fun onFailure(call: Call<TrackerResponse>, t: Throwable) {
