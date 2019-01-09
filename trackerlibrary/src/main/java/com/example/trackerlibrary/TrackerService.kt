@@ -1,6 +1,7 @@
 package com.example.trackerlibrary
 
 import android.annotation.SuppressLint
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -9,7 +10,9 @@ import android.location.LocationManager
 import android.os.Binder
 import android.os.Handler
 import android.os.IBinder
+import android.support.v4.app.NotificationCompat
 import android.util.Log
+import com.example.trackerlibrary.Background.ForegroundServicesNotification
 import com.example.trackerlibrary.Core.Settings
 import com.example.trackerlibrary.Service.Response.TrackerResponse
 import com.example.trackerlibrary.Service.TrackerApi
@@ -38,13 +41,18 @@ class TrackerService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         appUUID = intent!!.getStringExtra("trackerAppUUID")
+
+        startForeground(ForegroundServicesNotification.getNotificationId(), ForegroundServicesNotification.getNotification(applicationContext))
+
         resume()
         return START_STICKY
     }
 
     override fun onCreate() {
         super.onCreate()
-        runnable = Runnable { getLastLocation() }
+        runnable = Runnable {
+            getLastLocation()
+        }
         handler = Handler()
     }
 
@@ -61,6 +69,7 @@ class TrackerService : Service() {
 
     @SuppressLint("MissingPermission")
     private fun getLastLocation() {
+        Log.i("MENSAJE","service running")
         val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         var lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
         if (lastLocation == null) lastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
