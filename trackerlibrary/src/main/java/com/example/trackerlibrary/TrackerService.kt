@@ -26,7 +26,6 @@ class TrackerService : Service() {
 
     private var handler: Handler? = null
     private var runnable: Runnable? = null
-    private lateinit var appUUID: String
 
     inner class TestServiceBinder : Binder() {
         val service: TrackerService
@@ -40,10 +39,7 @@ class TrackerService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        appUUID = intent!!.getStringExtra("trackerAppUUID")
-
         startForeground(ForegroundServicesNotification.getNotificationId(), ForegroundServicesNotification.getNotification(applicationContext))
-
         resume()
         return START_STICKY
     }
@@ -87,7 +83,8 @@ class TrackerService : Service() {
         val gpsDataPayload  = GpsDataPayload()
         gpsDataPayload.lat = lastLocation.latitude
         gpsDataPayload.lon = lastLocation.longitude
-        gpsDataPayload.uid = appUUID
+        gpsDataPayload.uid = "123"
+        gpsDataPayload.geohash = "sin implementar"
 
         val call = TrackerApi.create().sendGpsPayload(gpsDataPayload)
         call.enqueue(object : Callback<TrackerResponse> {
