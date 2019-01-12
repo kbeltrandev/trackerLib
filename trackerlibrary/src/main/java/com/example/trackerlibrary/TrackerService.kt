@@ -21,6 +21,10 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.net.HttpURLConnection
 import java.util.*
+import android.telephony.TelephonyManager
+import android.hardware.usb.UsbDevice.getDeviceId
+import com.example.trackerlibrary.GeohasgGenerator.GeoHash
+
 
 class TrackerService : Service() {
 
@@ -83,8 +87,8 @@ class TrackerService : Service() {
         val gpsDataPayload  = GpsDataPayload()
         gpsDataPayload.lat = lastLocation.latitude
         gpsDataPayload.lon = lastLocation.longitude
-        gpsDataPayload.uid = "123"
-        gpsDataPayload.geohash = "sin implementar"
+        gpsDataPayload.uid = getDeviceImei()
+        gpsDataPayload.geohash = GeoHash.fromLocation(lastLocation).toString()!!
 
         val call = TrackerApi.create().sendGpsPayload(gpsDataPayload)
         call.enqueue(object : Callback<TrackerResponse> {
@@ -95,6 +99,14 @@ class TrackerService : Service() {
             override fun onFailure(call: Call<TrackerResponse>, t: Throwable) {
             }
         })
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun getDeviceImei() : String? {
+        val telephonyManager: TelephonyManager
+        telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+        val deviceId = telephonyManager.deviceId
+        return deviceId
     }
 
     private fun resume() {
