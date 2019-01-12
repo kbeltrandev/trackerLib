@@ -73,27 +73,27 @@ class TrackerService : Service() {
         val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         var lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
         if (lastLocation == null) lastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-
         if (lastLocation != null) {
             sendGpsMessage(lastLocation)
         }
-
         handler!!.removeCallbacks(runnable)
         resume()
     }
 
     private fun sendGpsMessage(lastLocation : Location) {
 
+        var geohash: GeoHash? = GeoHash.fromLocation(lastLocation)
         val gpsDataPayload  = GpsDataPayload()
         gpsDataPayload.lat = lastLocation.latitude
         gpsDataPayload.lon = lastLocation.longitude
         gpsDataPayload.uid = getDeviceImei()
-        gpsDataPayload.geohash = GeoHash.fromLocation(lastLocation).toString()!!
+        gpsDataPayload.geohash = geohash?.toString()
 
         val call = TrackerApi.create().sendGpsPayload(gpsDataPayload)
         call.enqueue(object : Callback<TrackerResponse> {
             override fun onResponse(call: Call<TrackerResponse>, response: Response<TrackerResponse>) {
                 if (response.code() == HttpURLConnection.HTTP_OK) {
+                    Log.i("MENSAJE","200 ok")
                 }
             }
             override fun onFailure(call: Call<TrackerResponse>, t: Throwable) {
