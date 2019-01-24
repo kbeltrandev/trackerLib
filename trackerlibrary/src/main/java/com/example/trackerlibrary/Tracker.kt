@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.support.v4.app.ActivityCompat
+import com.crashlytics.android.Crashlytics
+import io.fabric.sdk.android.Fabric
 
 
 class Tracker {
@@ -15,6 +17,7 @@ class Tracker {
         const val REQUEST_PERMISSIONS_REQUEST_CODE = 34
 
         fun initTrackerService(context : Context) {
+            Fabric.with(context, Crashlytics())
             val intent = Intent(context, TrackerService::class.java)
             context.startService(intent)
         }

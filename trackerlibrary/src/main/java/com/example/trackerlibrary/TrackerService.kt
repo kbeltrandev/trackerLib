@@ -24,6 +24,8 @@ import java.util.*
 import android.telephony.TelephonyManager
 import android.hardware.usb.UsbDevice.getDeviceId
 import com.example.trackerlibrary.GeohasgGenerator.GeoHash
+import com.example.trackerlibrary.Service.FireBasePayload
+import com.example.trackerlibrary.Service.Response.FireBaseTackerResponse
 
 
 class TrackerService : Service() {
@@ -82,7 +84,7 @@ class TrackerService : Service() {
 
     private fun sendGpsMessage(lastLocation : Location) {
 
-        var geohash: GeoHash? = GeoHash.fromLocation(lastLocation)
+        /*var geohash: GeoHash? = GeoHash.fromLocation(lastLocation)
         val gpsDataPayload  = GpsDataPayload()
         gpsDataPayload.lat = lastLocation.latitude
         gpsDataPayload.lon = lastLocation.longitude
@@ -98,7 +100,26 @@ class TrackerService : Service() {
             }
             override fun onFailure(call: Call<TrackerResponse>, t: Throwable) {
             }
+        })*/
+
+
+        var geohash: GeoHash? = GeoHash.fromLocation(lastLocation)
+        val gpsDataPayload  = FireBasePayload()
+        gpsDataPayload.latitude = lastLocation.latitude
+        gpsDataPayload.longitude = lastLocation.longitude
+        gpsDataPayload.geohash = geohash?.toString()
+
+        val call = TrackerApi.create().sendGpsPayload(gpsDataPayload)
+        call.enqueue(object : Callback<FireBaseTackerResponse> {
+            override fun onResponse(call: Call<FireBaseTackerResponse>, response: Response<FireBaseTackerResponse>) {
+                if (response.code() == HttpURLConnection.HTTP_OK) {
+                    Log.i("MENSAJE","200 ok")
+                }
+            }
+            override fun onFailure(call: Call<FireBaseTackerResponse>, t: Throwable) {
+            }
         })
+
     }
 
     @SuppressLint("MissingPermission")
