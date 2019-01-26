@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "737222944497",
+    "firebase_url": "https://trackerlab-a886d.firebaseio.com",
+    "project_id": "trackerlab-a886d",
+    "storage_bucket": "trackerlab-a886d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:737222944497:android:e64ba783d184be4c",
+        "android_client_info": {
+          "package_name": "com.example.karen.apptestlibary"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "737222944497-8si8ln38pt09k52phvfl5do5j3iph5ga.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCToi5cxywzcDPgiLn7YhZ6f1FAxBQbzs8"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
