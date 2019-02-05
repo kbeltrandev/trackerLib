@@ -2,4 +2,13 @@
     package="com.example.trackerlibrary" >
 
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <application
+        android:allowBackup="true"
+        android:label="@string/app_name"
+        android:supportsRtl="true">
+           <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="41f3b400411502d70eddc4427041a8ec6325e2db"
+            />
+     </application>
 </manifest>

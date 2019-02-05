@@ -22,14 +22,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service
-            android:name="com.example.trackerlibrary.TrackerService"
-            android:exported="false"/>
 
-        <meta-data
-            android:name="io.fabric.ApiKey"
-            android:value="41f3b400411502d70eddc4427041a8ec6325e2db"
-            />
     </application>
 
 </manifest>

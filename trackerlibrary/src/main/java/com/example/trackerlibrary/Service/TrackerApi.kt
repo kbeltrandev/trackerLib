@@ -11,15 +11,13 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.POST
+import retrofit2.http.Path
 import java.util.concurrent.TimeUnit
 
 interface TrackerApi {
 
     @POST("/app1/device1.json")
-        fun sendGpsPayload(@Body payload : FireBasePayload): Call<FireBaseTackerResponse>
-
-    /*@POST("/location")
-    fun sendGpsPayload(@Body payload : GpsDataPayload): Call<TrackerResponse>*/
+    fun sendGpsPayload(@Path("deviceid") deviceid: String? , @Path("appid") appid: String? , @Body payload : FireBasePayload): Call<FireBaseTackerResponse>
 
     companion object Factory {
         fun create(): TrackerApi {

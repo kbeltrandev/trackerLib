@@ -1,7 +1,6 @@
 package com.example.trackerlibrary
 
 import android.annotation.SuppressLint
-import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -10,22 +9,19 @@ import android.location.LocationManager
 import android.os.Binder
 import android.os.Handler
 import android.os.IBinder
-import android.support.v4.app.NotificationCompat
 import android.util.Log
 import com.example.trackerlibrary.Background.ForegroundServicesNotification
 import com.example.trackerlibrary.Core.Settings
-import com.example.trackerlibrary.Service.Response.TrackerResponse
 import com.example.trackerlibrary.Service.TrackerApi
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.net.HttpURLConnection
-import java.util.*
 import android.telephony.TelephonyManager
-import android.hardware.usb.UsbDevice.getDeviceId
 import com.example.trackerlibrary.GeohasgGenerator.GeoHash
-import com.example.trackerlibrary.Service.FireBasePayload
 import com.example.trackerlibrary.Service.Response.FireBaseTackerResponse
+import android.os.BatteryManager
+import com.example.trackerlibrary.Service.FireBasePayload
 
 
 class TrackerService : Service() {
@@ -82,34 +78,22 @@ class TrackerService : Service() {
         resume()
     }
 
+    @SuppressLint("MissingPermission")
     private fun sendGpsMessage(lastLocation : Location) {
-
-        /*var geohash: GeoHash? = GeoHash.fromLocation(lastLocation)
-        val gpsDataPayload  = GpsDataPayload()
-        gpsDataPayload.lat = lastLocation.latitude
-        gpsDataPayload.lon = lastLocation.longitude
-        gpsDataPayload.uid = getDeviceImei()
-        gpsDataPayload.geohash = geohash?.toString()
-
-        val call = TrackerApi.create().sendGpsPayload(gpsDataPayload)
-        call.enqueue(object : Callback<TrackerResponse> {
-            override fun onResponse(call: Call<TrackerResponse>, response: Response<TrackerResponse>) {
-                if (response.code() == HttpURLConnection.HTTP_OK) {
-                    Log.i("MENSAJE","200 ok")
-                }
-            }
-            override fun onFailure(call: Call<TrackerResponse>, t: Throwable) {
-            }
-        })*/
-
+        val batteryManager = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
 
         var geohash: GeoHash? = GeoHash.fromLocation(lastLocation)
         val gpsDataPayload  = FireBasePayload()
+        gpsDataPayload.geohash = geohash?.toString()
         gpsDataPayload.latitude = lastLocation.latitude
         gpsDataPayload.longitude = lastLocation.longitude
-        gpsDataPayload.geohash = geohash?.toString()
+        gpsDataPayload.speed = lastLocation.speed
+        gpsDataPayload.altitude = lastLocation.altitude
+        gpsDataPayload.batteryPercentage = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+        gpsDataPayload.device = android.os.Build.MANUFACTURER
+        gpsDataPayload.osversion = android.os.Build.VERSION.RELEASE
 
-        val call = TrackerApi.create().sendGpsPayload(gpsDataPayload)
+        val call = TrackerApi.create().sendGpsPayload(getDeviceImei(), "appid_001", gpsDataPayload)
         call.enqueue(object : Callback<FireBaseTackerResponse> {
             override fun onResponse(call: Call<FireBaseTackerResponse>, response: Response<FireBaseTackerResponse>) {
                 if (response.code() == HttpURLConnection.HTTP_OK) {
@@ -122,13 +106,12 @@ class TrackerService : Service() {
 
     }
 
-    @SuppressLint("MissingPermission")
-    private fun getDeviceImei() : String? {
-        val telephonyManager: TelephonyManager
-        telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-        val deviceId = telephonyManager.deviceId
-        return deviceId
+    @SuppressLint("MissingPermission", "NewApi")
+    private fun getDeviceImei() : String {
+        val telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+        return telephonyManager.imei
     }
+
 
     private fun resume() {
         handler!!.postDelayed(runnable, Settings.ServiceFrequencyMiliseconds)
