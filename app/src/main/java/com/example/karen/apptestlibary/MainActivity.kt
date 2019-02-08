@@ -11,7 +11,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        initTrackerLibrary()    }
+        initTrackerLibrary()
+    }
 
     private  fun initTrackerLibrary() {
         if (!Tracker.hasPermissions(this)) {

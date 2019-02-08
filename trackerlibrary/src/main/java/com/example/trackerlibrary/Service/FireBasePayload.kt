@@ -9,6 +9,8 @@ package com.example.trackerlibrary.Service
          var appVersion : String? = null,
          var geohash : String? = null,
          var device : String? = null,
-         var osversion : String? = null,
-         var networkOperator:  String? = null
+         var deviceModel : String? = null,
+         var osVersion : String? = null,
+         var networkOperator:  String? = null,
+         var deviceLanguage : String? = null
  )
