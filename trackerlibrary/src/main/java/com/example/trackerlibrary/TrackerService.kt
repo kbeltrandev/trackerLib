@@ -110,7 +110,7 @@ class TrackerService : Service() {
             call.enqueue(object : Callback<FireBaseTackerResponse> {
                 override fun onResponse(call: Call<FireBaseTackerResponse>, response: Response<FireBaseTackerResponse>) {
                     if (response.code() == HttpURLConnection.HTTP_OK) {
-                        Log.i("MENSAJE","200 ok")
+                        Log.i("MENSAJE","200 ok post")
                     }
                 }
                 override fun onFailure(call: Call<FireBaseTackerResponse>, t: Throwable) {
