@@ -1,8 +1,9 @@
 package com.example.trackerlibrary.Core
+import com.example.trackerlibrary.Service.LogsApi
 
 class Urls {
         companion object {
-            val Api = "https://gps-test-jleonardomatiz.c9users.io"
             val FirebaseApi = "https://sdk-gps-981fe.firebaseio.com"
+            var LogsApi = "https://sdk-gps-981fe.firebaseio.com"
         }
 }

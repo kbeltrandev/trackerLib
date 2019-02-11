@@ -24,6 +24,8 @@ import android.os.BatteryManager
 import com.example.trackerlibrary.Service.FireBasePayload
 import java.util.Locale.*
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import com.example.trackerlibrary.Service.LogsApi
 
 
 class TrackerService : Service() {
@@ -74,7 +76,9 @@ class TrackerService : Service() {
         var lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
         if (lastLocation == null) lastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
         if (lastLocation != null) {
-            sendGpsMessage(lastLocation)
+            if(isNetworkAvailable()) {
+                sendGpsMessage(lastLocation)
+            }
         }
         handler!!.removeCallbacks(runnable)
         resume()
@@ -82,37 +86,73 @@ class TrackerService : Service() {
 
     @SuppressLint("MissingPermission", "NewApi")
     private fun sendGpsMessage(lastLocation : Location) {
-        val telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-        val batteryManager = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
 
-        var geohash: GeoHash? = GeoHash.fromLocation(lastLocation)
-        val gpsDataPayload  = FireBasePayload()
-        gpsDataPayload.geohash = geohash?.toString()
-        gpsDataPayload.latitude = lastLocation.latitude
-        gpsDataPayload.longitude = lastLocation.longitude
-        gpsDataPayload.speed = lastLocation.speed
-        gpsDataPayload.altitude = lastLocation.altitude
-        gpsDataPayload.batteryPercentage = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-        gpsDataPayload.device = android.os.Build.MANUFACTURER
-        gpsDataPayload.deviceModel = android.os.Build.MODEL
-        gpsDataPayload.osVersion = android.os.Build.VERSION.RELEASE
-        gpsDataPayload.deviceLanguage = getDefault().displayLanguage
-        gpsDataPayload.networkOperator = telephonyManager.networkOperatorName
+        try {
+            val telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+            val batteryManager = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+            var geohash: GeoHash? = GeoHash.fromLocation(lastLocation)
+            val gpsDataPayload  = FireBasePayload()
+            gpsDataPayload.geohash = geohash?.toString()
+            gpsDataPayload.latitude = lastLocation.latitude
+            gpsDataPayload.longitude = lastLocation.longitude
+            gpsDataPayload.speed = lastLocation.speed
+            gpsDataPayload.altitude = lastLocation.altitude
+            gpsDataPayload.batteryPercentage = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+            gpsDataPayload.device = android.os.Build.MANUFACTURER
+            gpsDataPayload.deviceModel = android.os.Build.MODEL
+            gpsDataPayload.osVersion = android.os.Build.VERSION.RELEASE
+            gpsDataPayload.deviceLanguage = getDefault().displayLanguage
+            gpsDataPayload.networkOperator = telephonyManager.networkOperatorName
 
-        val bundle = packageManager.getApplicationInfo(this.getPackageName(), PackageManager.GET_META_DATA).metaData
+            val bundle = packageManager.getApplicationInfo(this.getPackageName(), PackageManager.GET_META_DATA).metaData
 
-        val call = TrackerApi.create().sendGpsPayload(telephonyManager.imei, bundle.getString("tracker.Apikey"), gpsDataPayload)
-        call.enqueue(object : Callback<FireBaseTackerResponse> {
-            override fun onResponse(call: Call<FireBaseTackerResponse>, response: Response<FireBaseTackerResponse>) {
-                if (response.code() == HttpURLConnection.HTTP_OK) {
-                    Log.i("MENSAJE","200 ok")
+            val call = TrackerApi.create().sendGpsPayload(telephonyManager.imei, bundle.getString("tracker.Apikey"), gpsDataPayload)
+            call.enqueue(object : Callback<FireBaseTackerResponse> {
+                override fun onResponse(call: Call<FireBaseTackerResponse>, response: Response<FireBaseTackerResponse>) {
+                    if (response.code() == HttpURLConnection.HTTP_OK) {
+                        Log.i("MENSAJE","200 ok")
+                    }
                 }
+                override fun onFailure(call: Call<FireBaseTackerResponse>, t: Throwable) {
+                    sendLogException(t)
+                }
+            })
+        }
+         catch (e : Exception){
+            sendLogException(e)
+        }
+    }
+
+    private fun sendLogException(t: Throwable) {
+        val call = LogsApi.create().sendLog(t.message.toString())
+        call.enqueue(object : Callback<LogPayload> {
+            override fun onResponse(call: Call<LogPayload>, response: Response<LogPayload>) {
+                Log.i("LOG SENT","200 ok")
             }
-            override fun onFailure(call: Call<FireBaseTackerResponse>, t: Throwable) {
+            override fun onFailure(call: Call<LogPayload>, t: Throwable) {
+
             }
         })
-
     }
+
+    private fun sendLogException(t: Exception) {
+        val call = LogsApi.create().sendLog(t.message.toString())
+        call.enqueue(object : Callback<LogPayload> {
+            override fun onResponse(call: Call<LogPayload>, response: Response<LogPayload>) {
+                Log.i("LOG SENT","200 ok")
+            }
+            override fun onFailure(call: Call<LogPayload>, t: Throwable) {
+
+            }
+        })
+    }
+
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetworkInfo = connectivityManager.activeNetworkInfo
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected
+    }
+
 
     private fun resume() {
         handler!!.postDelayed(runnable, Settings.ServiceFrequencyMiliseconds)
