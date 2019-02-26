@@ -5,6 +5,7 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.content.pm.PackageManager
 import com.example.trackerlibrary.Tracker
+import com.google.firebase.iid.FirebaseInstanceId
 
 
 class MainActivity : AppCompatActivity() {
@@ -12,6 +13,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         initTrackerLibrary()
+        getDeviceToken()
     }
 
     private  fun initTrackerLibrary() {
@@ -20,6 +22,15 @@ class MainActivity : AppCompatActivity() {
             return
         }
         Tracker.initTrackerService(this)
+    }
+
+    private  fun getDeviceToken() {
+        FirebaseInstanceId.getInstance().instanceId.addOnSuccessListener { instanceIdResult ->
+            val deviceToken = instanceIdResult.token
+            // Do whatever you want with your token now
+            // i.e. store it on SharedPreferences or DB
+            // or directly send it to server
+        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {

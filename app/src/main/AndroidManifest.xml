@@ -23,6 +23,14 @@
         </activity>
 
         <service android:name="com.example.trackerlibrary.TrackerService" android:exported="false"/>
+
+        <service
+            android:name=".FireBaseServiceInstance">
+            <intent-filter>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
+            </intent-filter>
+        </service>
+
         <meta-data android:name="tracker.Apikey" android:value="f821c510-2b0e-11e9-9fce-6ffca2fdfc84"/>
         <meta-data android:name="io.fabric.ApiKey" android:value="41f3b400411502d70eddc4427041a8ec6325e2db" />
 
