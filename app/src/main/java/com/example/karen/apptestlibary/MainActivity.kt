@@ -21,15 +21,18 @@ class MainActivity : AppCompatActivity() {
             Tracker.startLocationPermissionRequest(this)
             return
         }
+
+       // var customParameters = ArrayList<CustomParameters>''()
+
+
+        Tracker.getCustomParameters(this)
         Tracker.initTrackerService(this)
     }
 
     private  fun getDeviceToken() {
         FirebaseInstanceId.getInstance().instanceId.addOnSuccessListener { instanceIdResult ->
             val deviceToken = instanceIdResult.token
-            // Do whatever you want with your token now
-            // i.e. store it on SharedPreferences or DB
-            // or directly send it to server
+            Tracker.sendDeviceToken(deviceToken, this)
         }
     }
 

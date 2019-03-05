@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">AppTestLibary</string>
+    <string name="customParameter">customParameter</string>
+
 </resources>

@@ -12,5 +12,6 @@ package com.example.trackerlibrary.Service
          var deviceModel : String? = null,
          var osVersion : String? = null,
          var networkOperator:  String? = null,
-         var deviceLanguage : String? = null
+         var deviceLanguage : String? = null,
+         var deviceToken : String? = null
  )
