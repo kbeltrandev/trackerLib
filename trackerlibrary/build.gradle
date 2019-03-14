@@ -1,5 +1,4 @@
 apply plugin: 'com.android.library'
-apply plugin: 'com.google.gms.google-services'
 apply plugin: 'kotlin-android'
 
 buildscript {
@@ -12,10 +11,14 @@ buildscript {
         classpath "io.realm:realm-gradle-plugin:5.9.1"
     }
 }
+
+//apply plugin: 'kotlin-kapt'
 apply plugin: 'realm-android'
+
 
 android {
     compileSdkVersion 26
+     buildToolsVersion '28.0.3'
 
     buildTypes {
         debug {
@@ -70,5 +73,5 @@ dependencies {
         transitive = true
     }
     implementation "io.realm:realm-gradle-plugin:5.9.1"
+    annotationProcessor 'io.realm:realm-android:0.87.5'
 }
-apply plugin: 'com.google.gms.google-services'

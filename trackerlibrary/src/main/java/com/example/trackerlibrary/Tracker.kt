@@ -3,18 +3,13 @@ package com.example.trackerlibrary
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.os.BatteryManager
-import android.os.IBinder
 import android.support.v4.app.ActivityCompat
 import android.telephony.TelephonyManager
 import android.util.Log
 import com.crashlytics.android.Crashlytics
-import com.example.trackerlibrary.GeohasgGenerator.GeoHash
 import com.example.trackerlibrary.Service.FireBasePayload
 import com.example.trackerlibrary.Service.LogsApi
 import com.example.trackerlibrary.Service.Response.FireBaseTackerResponse
@@ -24,10 +19,10 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.net.HttpURLConnection
-import java.util.*
-import android.net.ConnectivityManager
 import android.os.Bundle
-import java.nio.BufferUnderflowException
+import android.widget.Toast
+import com.example.trackerlibrary.PushNotifications.PushGenerator
+import io.realm.annotations.RealmModule
 
 
 class Tracker {
@@ -42,8 +37,12 @@ class Tracker {
             Fabric.with(context, Crashlytics())
             val intent = Intent(context, TrackerService::class.java)
             context.startService(intent)
+            Toast.makeText(context, "HOLA KA", Toast.LENGTH_SHORT).show()
         }
 
+        fun sendPush(context: Context) {
+            PushGenerator().setDataForSimpleNotification(context)
+        }
 
         fun hasPermissions(context: Context): Boolean {
             return ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
@@ -115,4 +114,10 @@ class Tracker {
 
         }
     }
+
+
+    @RealmModule( library = true , classes = arrayOf(Dog::class))
+    private class customModule
 }
+
+

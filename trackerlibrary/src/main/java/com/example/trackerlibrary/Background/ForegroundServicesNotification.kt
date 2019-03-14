@@ -25,7 +25,7 @@ object ForegroundServicesNotification {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val notificationManager = context.getSystemService(NotificationManager::class.java)
                 val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW)
-                channel.setSound(null, null)
+
                 channel.setShowBadge(false)
                 notificationManager!!.createNotificationChannel(channel)
                 notification = Notification.Builder(context, CHANNEL_ID)
@@ -42,7 +42,7 @@ object ForegroundServicesNotification {
                     .setContentIntent(pendingIntent)
                     .setOngoing(true)
                     .setAutoCancel(false)
-                    .setSound(null)
+
                     .setPriority(Notification.PRIORITY_LOW)
                     .setContentTitle("Tracker lib is running")
                     .setContentText("Touch for more information or to stop the app")

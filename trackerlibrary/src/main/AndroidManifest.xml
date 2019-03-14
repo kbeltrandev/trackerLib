@@ -11,5 +11,7 @@
             android:name="io.fabric.ApiKey"
             android:value="41f3b400411502d70eddc4427041a8ec6325e2db"
             />
-     </application>
+
+        <activity android:name="com.example.trackerlibrary.PushNotifications.PushGenerator" />
+    </application>
 </manifest>
