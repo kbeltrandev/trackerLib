@@ -1,6 +1,8 @@
 package com.example.trackerlibrary.Service
 
  data class FireBasePayload (
+         var appid : String? = null,
+         var deviceid : String? = null,
          var latitude : Double? = 0.0,
          var longitude : Double? = 0.0,
          var speed: Float = 0.0f,
@@ -12,6 +14,5 @@ package com.example.trackerlibrary.Service
          var deviceModel : String? = null,
          var osVersion : String? = null,
          var networkOperator:  String? = null,
-         var deviceLanguage : String? = null,
-         var deviceToken : String? = null
+         var deviceLanguage : String? = null
  )

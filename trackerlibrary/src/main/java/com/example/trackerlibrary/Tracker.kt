@@ -23,6 +23,9 @@ import android.os.Bundle
 import android.widget.Toast
 import com.example.trackerlibrary.PushNotifications.PushGenerator
 import io.realm.annotations.RealmModule
+import android.content.SharedPreferences
+import android.R.id.edit
+import android.os.Message
 
 
 class Tracker {
@@ -38,10 +41,6 @@ class Tracker {
             val intent = Intent(context, TrackerService::class.java)
             context.startService(intent)
             Toast.makeText(context, "HOLA KA", Toast.LENGTH_SHORT).show()
-        }
-
-        fun sendPush(context: Context) {
-            PushGenerator().setDataForSimpleNotification(context)
         }
 
         fun hasPermissions(context: Context): Boolean {
@@ -67,9 +66,7 @@ class Tracker {
 
             val telephonyManager = context.applicationContext.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
             val gpsDataPayload  = FireBasePayload()
-            gpsDataPayload.deviceToken = deviceToken
-
-            val call = TrackerApi.create().sendGpsPayload(telephonyManager.imei, getMetaData(context).getString("tracker.Apikey"), gpsDataPayload)
+            val call = TrackerApi.create().sendGpsPayload(gpsDataPayload)
 
             call.enqueue(object : Callback<FireBaseTackerResponse> {
                 override fun onResponse(call: Call<FireBaseTackerResponse>, response: Response<FireBaseTackerResponse>) {

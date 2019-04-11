@@ -16,8 +16,8 @@ import java.util.concurrent.TimeUnit
 
 interface TrackerApi {
 
-    @POST("/{appid}/{deviceid}.json")
-    fun sendGpsPayload(@Path("deviceid") deviceid: String? , @Path("appid") appid: String? , @Body payload : FireBasePayload): Call<FireBaseTackerResponse>
+    @POST("/updateLocation")
+    fun sendGpsPayload(@Body payload : FireBasePayload): Call<FireBaseTackerResponse>
 
     companion object Factory {
         fun create(): TrackerApi {

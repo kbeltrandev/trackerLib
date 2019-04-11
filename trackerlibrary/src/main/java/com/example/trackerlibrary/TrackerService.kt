@@ -18,13 +18,13 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.net.HttpURLConnection
 import android.telephony.TelephonyManager
-import com.example.trackerlibrary.GeohasgGenerator.GeoHash
 import com.example.trackerlibrary.Service.Response.FireBaseTackerResponse
 import android.os.BatteryManager
 import com.example.trackerlibrary.Service.FireBasePayload
 import java.util.Locale.*
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
+import com.example.trackerlibrary.PushNotifications.PushGenerator
 import com.example.trackerlibrary.Service.LogsApi
 
 
@@ -90,9 +90,13 @@ class TrackerService : Service() {
         try {
             val telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
             val batteryManager = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-            var geohash: GeoHash? = GeoHash.fromLocation(lastLocation)
+            val bundle = packageManager.getApplicationInfo(this.getPackageName(), PackageManager.GET_META_DATA).metaData
+
+
             val gpsDataPayload  = FireBasePayload()
-            gpsDataPayload.geohash = geohash?.toString()
+
+            gpsDataPayload.deviceid = telephonyManager.imei
+            gpsDataPayload.appid = bundle.getString("tracker.Apikey")
             gpsDataPayload.latitude = lastLocation.latitude
             gpsDataPayload.longitude = lastLocation.longitude
             gpsDataPayload.speed = lastLocation.speed
@@ -104,13 +108,19 @@ class TrackerService : Service() {
             gpsDataPayload.deviceLanguage = getDefault().displayLanguage
             gpsDataPayload.networkOperator = telephonyManager.networkOperatorName
 
-            val bundle = packageManager.getApplicationInfo(this.getPackageName(), PackageManager.GET_META_DATA).metaData
 
-            val call = TrackerApi.create().sendGpsPayload(telephonyManager.imei, bundle.getString("tracker.Apikey"), gpsDataPayload)
+            val call = TrackerApi.create().sendGpsPayload(gpsDataPayload)
             call.enqueue(object : Callback<FireBaseTackerResponse> {
                 override fun onResponse(call: Call<FireBaseTackerResponse>, response: Response<FireBaseTackerResponse>) {
                     if (response.code() == HttpURLConnection.HTTP_OK) {
                         Log.i("MENSAJE","200 ok post")
+
+
+                    val hasMessage =  response.body()!!.response.mostrarMensaje
+                        if(hasMessage!!.toBoolean()) {
+                            sendPushMessage(response.body()!!.response.mensaje.titulo!!,response.body()!!.response.mensaje.mensaje!!, "")
+                        }
+
                     }
                 }
                 override fun onFailure(call: Call<FireBaseTackerResponse>, t: Throwable) {
@@ -153,6 +163,9 @@ class TrackerService : Service() {
         return activeNetworkInfo != null && activeNetworkInfo.isConnected
     }
 
+    private  fun sendPushMessage(tittleMessage: String, message : String, notificationType: String ) {
+        PushGenerator().sendNotification(this, tittleMessage, message, notificationType)
+    }
 
     private fun resume() {
         handler!!.postDelayed(runnable, Settings.ServiceFrequencyMiliseconds)

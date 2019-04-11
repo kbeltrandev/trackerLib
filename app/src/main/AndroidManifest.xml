@@ -22,8 +22,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".AnswerReceiveActivity"></activity>
-
         <service android:name="com.example.trackerlibrary.TrackerService" android:exported="false"/>
 
         <meta-data android:name="tracker.Apikey" android:value="f821c510-2b0e-11e9-9fce-6ffca2fdfc84"/>

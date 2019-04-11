@@ -12,9 +12,11 @@ import android.graphics.Color
 import android.os.Build
 import android.widget.Button
 import com.example.trackerlibrary.R
+import com.example.trackerlibrary.ActionReceiver
+
+
 
 class PushGenerator {
-
 
     private var notificationTitle: String? = null
     private var notificationText: String? = null
@@ -30,13 +32,8 @@ class PushGenerator {
         notificationText = "Hello..This is a Notification Test"
     }
 
-    fun setDataForSimpleNotification(context: Context) {
-        sendNotification(context)
-    }
-
-
     @SuppressLint("NewApi")
-    fun sendNotification(context: Context) {
+    fun sendNotification(context: Context, tittleMessage: String, messageContent: String, notificationType: String) {
 
         val notificationIntent = Intent(context,Class.forName("com.example.karen.apptestlibary.MainActivity"))
         val pendingInten = PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT)
@@ -50,20 +47,28 @@ class PushGenerator {
                 var notificationManager : NotificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 notificationManager.createNotificationChannel(notificationChannel)
 
+
+                val answerIntent = Intent(context, Class.forName("com.example.karen.apptestlibary.MainActivity"))
+                //val pendingIntentYes = PendingIntent.getActivity(context, 1, answerIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+                val intentAction = Intent(context, ActionReceiver::class.java)
+                val broadcast =  PendingIntent.getBroadcast(context,1,intentAction,PendingIntent.FLAG_UPDATE_CURRENT)
+
                 builder = Notification.Builder(context, channeId)
-                        .setContentTitle("Tracker Library")
-                        .setContentText("Hola!!")
+                        .setContentTitle(tittleMessage)
+                        .setContentText(messageContent)
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .setLargeIcon(BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher))
                         .setContentIntent(pendingInten)
+                        .addAction(R.drawable.notification_icon_background, "http://google.com", broadcast)
+
 
                 notificationManager!!.notify(1234, builder.build())
             }
             else
             {
                 builder = Notification.Builder(context)
-                        .setContentTitle("CodeAndroid")
-                        .setContentText("test notification")
+                        .setContentTitle(tittleMessage)
+                        .setContentText(messageContent)
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .setLargeIcon(BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher))
                         .setContentIntent(pendingInten)
@@ -73,6 +78,10 @@ class PushGenerator {
             }
 
 
+
+    }
+
+    fun openLink() {
 
     }
 }

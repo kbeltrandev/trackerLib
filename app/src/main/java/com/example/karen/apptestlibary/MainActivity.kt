@@ -38,11 +38,6 @@ class MainActivity : AppCompatActivity(){
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingInten = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT)
 
-
-        btnMainSendSimpleNotification = findViewById(R.id.btnMainSendSimpleNotification) as Button
-        btnMainSendSimpleNotification.setOnClickListener {
-            Tracker.sendPush(this)
-        }
             /*
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 notificationChannel = NotificationChannel(channeId,description, NotificationManager.IMPORTANCE_HIGH)
