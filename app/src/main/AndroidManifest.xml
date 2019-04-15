@@ -24,11 +24,12 @@
 
         <service android:name="com.example.trackerlibrary.TrackerService" android:exported="false"/>
 
-        <meta-data android:name="tracker.Apikey" android:value="f821c510-2b0e-11e9-9fce-6ffca2fdfc84"/>
+        <meta-data android:name="tracker.Apikey" android:value="IVTTkMzQ9t5GY6049bEG"/>
         <meta-data android:name="io.fabric.ApiKey" android:value="41f3b400411502d70eddc4427041a8ec6325e2db" />
 
         <meta-data android:name="f821c510-2b0e-11e9-9fce-6ffca2fdfc84_Sexo" android:value="F" />
 
+        <receiver android:name="com.example.trackerlibrary.ActionReceiver" />
     </application>
 
 </manifest>

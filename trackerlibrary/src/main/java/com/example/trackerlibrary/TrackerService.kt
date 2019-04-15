@@ -26,6 +26,7 @@ import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import com.example.trackerlibrary.PushNotifications.PushGenerator
 import com.example.trackerlibrary.Service.LogsApi
+import com.example.trackerlibrary.Service.Response.SimpleResponse
 
 
 class TrackerService : Service() {
@@ -115,10 +116,11 @@ class TrackerService : Service() {
                     if (response.code() == HttpURLConnection.HTTP_OK) {
                         Log.i("MENSAJE","200 ok post")
 
+                       gpsDataPayload.idcampaign =  response.body()!!.response.id
 
                     val hasMessage =  response.body()!!.response.mostrarMensaje
                         if(hasMessage!!.toBoolean()) {
-                            sendPushMessage(response.body()!!.response.mensaje.titulo!!,response.body()!!.response.mensaje.mensaje!!, "")
+                            sendPushMessage(response.body()!!, gpsDataPayload)
                         }
 
                     }
@@ -163,8 +165,8 @@ class TrackerService : Service() {
         return activeNetworkInfo != null && activeNetworkInfo.isConnected
     }
 
-    private  fun sendPushMessage(tittleMessage: String, message : String, notificationType: String ) {
-        PushGenerator().sendNotification(this, tittleMessage, message, notificationType)
+    private  fun sendPushMessage( notificationData : FireBaseTackerResponse , gpsDataPayload : FireBasePayload) {
+        PushGenerator().sendNotification(this, notificationData , gpsDataPayload)
     }
 
     private fun resume() {

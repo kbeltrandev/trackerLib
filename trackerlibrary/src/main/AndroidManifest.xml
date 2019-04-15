@@ -12,6 +12,6 @@
             android:value="41f3b400411502d70eddc4427041a8ec6325e2db"
             />
 
-        <receiver android:name=".ActionReceiver" />
+        <receiver android:name="com.example.trackerlibrary.ActionReceiver" />
     </application>
 </manifest>

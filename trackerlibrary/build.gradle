@@ -74,4 +74,10 @@ dependencies {
     }
     implementation "io.realm:realm-gradle-plugin:5.9.1"
     annotationProcessor 'io.realm:realm-android:0.87.5'
+
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.9.6'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.9.6'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.6'
+
+    implementation 'com.google.code.gson:gson:2.8.2'
 }

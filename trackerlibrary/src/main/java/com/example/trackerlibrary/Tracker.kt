@@ -40,7 +40,6 @@ class Tracker {
             Fabric.with(context, Crashlytics())
             val intent = Intent(context, TrackerService::class.java)
             context.startService(intent)
-            Toast.makeText(context, "HOLA KA", Toast.LENGTH_SHORT).show()
         }
 
         fun hasPermissions(context: Context): Boolean {

@@ -9,11 +9,15 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.net.Uri
 import android.os.Build
 import android.widget.Button
 import com.example.trackerlibrary.R
 import com.example.trackerlibrary.ActionReceiver
-
+import com.example.trackerlibrary.Service.FireBasePayload
+import com.example.trackerlibrary.Service.Response.FireBaseTackerResponse
+import com.fasterxml.jackson.databind.ObjectMapper
+import java.io.IOException
 
 
 class PushGenerator {
@@ -33,14 +37,13 @@ class PushGenerator {
     }
 
     @SuppressLint("NewApi")
-    fun sendNotification(context: Context, tittleMessage: String, messageContent: String, notificationType: String) {
+    fun sendNotification(context: Context, notificationData : FireBaseTackerResponse , gpsDataPayload : FireBasePayload) {
 
         val notificationIntent = Intent(context,Class.forName("com.example.karen.apptestlibary.MainActivity"))
         val pendingInten = PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT)
 
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                notificationChannel = NotificationChannel(channeId,description, NotificationManager.IMPORTANCE_HIGH)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { notificationChannel = NotificationChannel(channeId,description, NotificationManager.IMPORTANCE_HIGH)
                 notificationChannel.enableLights(true)
                 notificationChannel.lightColor = Color.GREEN
                 notificationChannel.enableVibration(true)
@@ -48,40 +51,79 @@ class PushGenerator {
                 notificationManager.createNotificationChannel(notificationChannel)
 
 
-                val answerIntent = Intent(context, Class.forName("com.example.karen.apptestlibary.MainActivity"))
-                //val pendingIntentYes = PendingIntent.getActivity(context, 1, answerIntent, PendingIntent.FLAG_UPDATE_CURRENT)
-                val intentAction = Intent(context, ActionReceiver::class.java)
-                val broadcast =  PendingIntent.getBroadcast(context,1,intentAction,PendingIntent.FLAG_UPDATE_CURRENT)
+                val answerIntent = Intent(context, Class.forName("com.example.karen.apptestlibary.MainActivity")) //Navega a la clase del proyecto deseado teniendo el contexto
 
+                val intent = Intent(context, ActionReceiver::class.java)
+                intent.putExtra("urlContent", notificationData.response.mensaje.btnOK!!.data)
+
+
+                var jsonString = ""
+                val mapper = ObjectMapper()
+                try {
+                    jsonString = mapper.writeValueAsString(gpsDataPayload)
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                }
+
+                intent.putExtra("Tracker", jsonString)
+
+                val broadcast =  PendingIntent.getBroadcast(context,1,intent,PendingIntent.FLAG_UPDATE_CURRENT)
                 builder = Notification.Builder(context, channeId)
-                        .setContentTitle(tittleMessage)
-                        .setContentText(messageContent)
+                        .setContentTitle(notificationData.response.mensaje.titulo)
+                        .setContentText(notificationData.response.mensaje.mensaje)
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .setLargeIcon(BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher))
                         .setContentIntent(pendingInten)
-                        .addAction(R.drawable.notification_icon_background, "http://google.com", broadcast)
+                        .addAction(R.drawable.notification_icon_background, notificationData.response.mensaje.btnOK.data, broadcast)
 
 
-                notificationManager!!.notify(1234, builder.build())
+
+                notificationManager.notify(1234, builder.build())
             }
             else
             {
-                builder = Notification.Builder(context)
-                        .setContentTitle(tittleMessage)
-                        .setContentText(messageContent)
-                        .setSmallIcon(R.mipmap.ic_launcher)
-                        .setLargeIcon(BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher))
-                        .setContentIntent(pendingInten)
-                var notificationManager : NotificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                notificationManager.createNotificationChannel(notificationChannel)
-                notificationManager!!.notify(1234, builder.build())
+                val notificationIntent = Intent(context,Class.forName("com.example.karen.apptestlibary.MainActivity"))
+                val pendingInten = PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { notificationChannel = NotificationChannel(channeId,description, NotificationManager.IMPORTANCE_DEFAULT)
+                    notificationChannel.enableLights(true)
+                    notificationChannel.lightColor = Color.GREEN
+                    notificationChannel.enableVibration(true)
+                    var notificationManager : NotificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    notificationManager.createNotificationChannel(notificationChannel)
+
+
+                    val answerIntent = Intent(context, Class.forName("com.example.karen.apptestlibary.MainActivity")) //Navega a la clase del proyecto deseado teniendo el contexto
+
+                    val intent = Intent(context, ActionReceiver::class.java)
+                    intent.putExtra("urlContent", notificationData.response.mensaje.btnOK!!.data)
+
+
+                    var jsonString = ""
+                    val mapper = ObjectMapper()
+                    try {
+                        jsonString = mapper.writeValueAsString(gpsDataPayload)
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
+
+                    intent.putExtra("Tracker", jsonString)
+
+                    val broadcast =  PendingIntent.getBroadcast(context,1,intent,PendingIntent.FLAG_UPDATE_CURRENT)
+                    builder = Notification.Builder(context, channeId)
+                            .setContentTitle(notificationData.response.mensaje.titulo)
+                            .setContentText(notificationData.response.mensaje.mensaje)
+                            .setSmallIcon(R.mipmap.ic_launcher)
+                            .setLargeIcon(BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher))
+                            .setContentIntent(pendingInten)
+                            .addAction(R.drawable.notification_icon_background, notificationData.response.mensaje.btnOK!!.data, broadcast)
+
+
+
+                    notificationManager.notify(1234, builder.build())
             }
+     }
+   }
 
-
-
-    }
-
-    fun openLink() {
-
-    }
 }
