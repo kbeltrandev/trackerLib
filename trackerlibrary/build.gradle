@@ -1,5 +1,8 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'realm-android'
 
 buildscript {
      repositories {
@@ -79,5 +82,10 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.9.6'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.6'
 
-    implementation 'com.google.code.gson:gson:2.8.2'
+    // implementation 'com.google.code.gson:gson:2.8.2'
+    implementation "com.google.android.gms:play-services-location:16.0.0"
+    implementation 'com.google.android.gms:play-services-maps:16.1.0'
 }
+
+apply plugin: 'com.google.gms.google-services'
+

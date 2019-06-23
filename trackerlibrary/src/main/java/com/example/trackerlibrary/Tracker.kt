@@ -25,7 +25,12 @@ import com.example.trackerlibrary.PushNotifications.PushGenerator
 import io.realm.annotations.RealmModule
 import android.content.SharedPreferences
 import android.R.id.edit
+import android.content.BroadcastReceiver
+import android.location.Location
+import android.os.Looper
 import android.os.Message
+import io.realm.Realm
+import io.realm.RealmConfiguration
 
 
 class Tracker {
@@ -35,11 +40,44 @@ class Tracker {
 
         private val context : Context? = null
         const val REQUEST_PERMISSIONS_REQUEST_CODE = 34
+        // The BroadcastReceiver used to listen from broadcasts from the service.
+        private var myReceiver: MyReceiver? = null
+
+        // A reference to the service used to get location updates.
+        private var mService: LocationUpdatesService? = null
 
         fun initTrackerService(context : Context) {
             Fabric.with(context, Crashlytics())
+           /* myReceiver = MyReceiver()
+            mService!!.requestLocationUpdates()*/
+
+            Realm.init(context)
+            val mRealmConfiguration = RealmConfiguration.Builder()
+                    .name("yourDBName.realm")
+                    .modules(MyModule())
+                    .schemaVersion(1) // skip if you are not managing
+                    .deleteRealmIfMigrationNeeded()
+                    .build()
+
+            Realm.getInstance(mRealmConfiguration)
+            Realm.setDefaultConfiguration(mRealmConfiguration)
+
             val intent = Intent(context, TrackerService::class.java)
             context.startService(intent)
+
+
+        }
+
+        /**
+         * Receiver for broadcasts sent by [LocationUpdatesService].
+         */
+        private class MyReceiver : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                var location = intent.getParcelableExtra<Location>(LocationUpdatesService.EXTRA_LOCATION);
+                if (location != null) {
+
+                }
+            }
         }
 
         fun hasPermissions(context: Context): Boolean {
@@ -112,8 +150,11 @@ class Tracker {
     }
 
 
-    @RealmModule( library = true , classes = arrayOf(Dog::class))
-    private class customModule
+   /* @RealmModule( library = true , classes = arrayOf(Dog::class))
+    private class customModule*/
 }
 
 
+// Create the module
+@RealmModule(library = true, allClasses = true)
+internal class MyModule

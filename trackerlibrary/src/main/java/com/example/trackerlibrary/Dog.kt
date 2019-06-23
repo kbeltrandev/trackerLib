@@ -8,5 +8,8 @@ import java.io.Serializable
 @RealmClass
 open class Dog : RealmObject() {
 
+
+   var name: String? = null
    var age: Int = 0
+
 }

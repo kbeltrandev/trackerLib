@@ -17,8 +17,11 @@ import java.util.concurrent.TimeUnit
 
 interface TrackerApi {
 
-    @POST("/updateLocation")
-    fun sendGpsPayload(@Body payload : FireBasePayload): Call<FireBaseTackerResponse> // tracker
+   /* @POST("/updateLocation")
+    fun sendGpsPayload(@Body payload : FireBasePayload): Call<FireBaseTackerResponse> // tracker*/
+
+    @POST("/newLocation")
+    fun sendGpsPayload(@Body payload : FireBasePayload): Call<FireBaseTackerResponse>
 
     @POST("/views")
     fun sendCampaignView(@Body payload : FireBasePayload): Call<FireBaseTackerResponse> //vistos

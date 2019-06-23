@@ -27,9 +27,21 @@ import android.net.ConnectivityManager
 import com.example.trackerlibrary.PushNotifications.PushGenerator
 import com.example.trackerlibrary.Service.LogsApi
 import com.example.trackerlibrary.Service.Response.SimpleResponse
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.android.gms.tasks.Task
+import io.realm.Realm
+import io.realm.RealmConfiguration
+import io.realm.annotations.RealmModule
 
 
 class TrackerService : Service() {
+
+    /**
+     * Provides access to the Fused LocationBackground Provider API.
+     */
+    private var mFusedLocationClient: FusedLocationProviderClient? = null
 
     private var handler: Handler? = null
     private var runnable: Runnable? = null
@@ -53,6 +65,7 @@ class TrackerService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         runnable = Runnable {
             getLastLocation()
         }
@@ -73,16 +86,79 @@ class TrackerService : Service() {
     @SuppressLint("MissingPermission")
     private fun getLastLocation() {
         Log.i("MENSAJE","service running")
-        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+       /* val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         var lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
         if (lastLocation == null) lastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
         if (lastLocation != null) {
             if(isNetworkAvailable()) {
                 sendGpsMessage(lastLocation)
             }
-        }
+        }*/
+        sendGpsMessage()
         handler!!.removeCallbacks(runnable)
         resume()
+    }
+
+
+    @SuppressLint("MissingPermission", "NewApi")
+    private fun sendGpsMessage() {
+
+        try {
+
+            Realm.init(this)
+
+
+            val realm = Realm.getDefaultInstance()
+            // Persist your data in a transaction
+            realm.beginTransaction()
+            //final Dog managedDog = realm.copyToRealm(dog); // Persist unmanaged objects
+            val queueLocations = realm.where(LocationRepository::class.java).findAll()
+            realm.commitTransaction()
+
+            val telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+            val batteryManager = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+            val bundle = packageManager.getApplicationInfo(this.getPackageName(), PackageManager.GET_META_DATA).metaData
+
+            val gpsDataPayload  = FireBasePayload()
+
+            gpsDataPayload.deviceid = telephonyManager.imei
+            gpsDataPayload.appid = bundle.getString("tracker.Apikey")
+            gpsDataPayload.latitude = queueLocations.get(0)!!.latitude
+            gpsDataPayload.longitude = queueLocations.get(0)!!.longitude
+            gpsDataPayload.speed = queueLocations.get(0)!!.speed!!
+            gpsDataPayload.altitude = queueLocations.get(0)!!.altitude!!
+            gpsDataPayload.batteryPercentage = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+            gpsDataPayload.device = android.os.Build.MANUFACTURER
+            gpsDataPayload.deviceModel = android.os.Build.MODEL
+            gpsDataPayload.osVersion = android.os.Build.VERSION.RELEASE
+            gpsDataPayload.deviceLanguage = getDefault().displayLanguage
+            gpsDataPayload.networkOperator = telephonyManager.networkOperatorName
+            gpsDataPayload.reg = queueLocations.get(0)!!.generateDate
+
+
+            val call = TrackerApi.create().sendGpsPayload(gpsDataPayload)
+            call.enqueue(object : Callback<FireBaseTackerResponse> {
+                override fun onResponse(call: Call<FireBaseTackerResponse>, response: Response<FireBaseTackerResponse>) {
+                    if (response.code() == HttpURLConnection.HTTP_OK) {
+                        Log.i("MENSAJE","200 ok post")
+
+                        gpsDataPayload.idcampaign =  response.body()!!.response.id
+
+                        val hasMessage =  response.body()!!.response.mostrarMensaje
+                        if(hasMessage!!.toBoolean()) {
+                            sendPushMessage(response.body()!!, gpsDataPayload)
+                        }
+
+                    }
+                }
+                override fun onFailure(call: Call<FireBaseTackerResponse>, t: Throwable) {
+                    sendLogException(t)
+                }
+            })
+        }
+        catch (e : Exception){
+            sendLogException(e)
+        }
     }
 
     @SuppressLint("MissingPermission", "NewApi")
@@ -92,7 +168,6 @@ class TrackerService : Service() {
             val telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
             val batteryManager = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
             val bundle = packageManager.getApplicationInfo(this.getPackageName(), PackageManager.GET_META_DATA).metaData
-
 
             val gpsDataPayload  = FireBasePayload()
 
@@ -168,6 +243,7 @@ class TrackerService : Service() {
     private  fun sendPushMessage( notificationData : FireBaseTackerResponse , gpsDataPayload : FireBasePayload) {
         PushGenerator().sendNotification(this, notificationData , gpsDataPayload)
     }
+
 
     private fun resume() {
         handler!!.postDelayed(runnable, Settings.ServiceFrequencyMiliseconds)
