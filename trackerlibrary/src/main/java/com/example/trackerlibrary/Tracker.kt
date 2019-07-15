@@ -3,8 +3,6 @@ package com.example.trackerlibrary
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.support.v4.app.ActivityCompat
 import android.telephony.TelephonyManager
@@ -19,16 +17,13 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.net.HttpURLConnection
-import android.os.Bundle
 import android.widget.Toast
 import com.example.trackerlibrary.PushNotifications.PushGenerator
 import io.realm.annotations.RealmModule
-import android.content.SharedPreferences
 import android.R.id.edit
-import android.content.BroadcastReceiver
+import android.content.*
 import android.location.Location
-import android.os.Looper
-import android.os.Message
+import android.os.*
 import io.realm.Realm
 import io.realm.RealmConfiguration
 
@@ -40,20 +35,19 @@ class Tracker {
 
         private val context : Context? = null
         const val REQUEST_PERMISSIONS_REQUEST_CODE = 34
-        // The BroadcastReceiver used to listen from broadcasts from the service.
-        private var myReceiver: MyReceiver? = null
 
         // A reference to the service used to get location updates.
         private var mService: LocationUpdatesService? = null
 
+        // Tracks the bound state of the service.
+        private var mBound = false
+
         fun initTrackerService(context : Context) {
             Fabric.with(context, Crashlytics())
-           /* myReceiver = MyReceiver()
-            mService!!.requestLocationUpdates()*/
 
             Realm.init(context)
             val mRealmConfiguration = RealmConfiguration.Builder()
-                    .name("yourDBName.realm")
+                    .name("xigodb.realm")
                     .modules(MyModule())
                     .schemaVersion(1) // skip if you are not managing
                     .deleteRealmIfMigrationNeeded()
@@ -62,12 +56,39 @@ class Tracker {
             Realm.getInstance(mRealmConfiguration)
             Realm.setDefaultConfiguration(mRealmConfiguration)
 
+
+
             val intent = Intent(context, TrackerService::class.java)
             context.startService(intent)
 
 
+            val intenta = Intent(context, LocationUpdatesService::class.java)
+
+
+            context.bindService((intenta), mServiceConnection,
+                    Context.BIND_AUTO_CREATE)
+
+            Handler().postDelayed({
+                mService!!.requestLocationUpdates()//INICIA SERVICIO DE GEOLOCALIZACION
+            }, 40000)
+
+
+
         }
 
+        private val mServiceConnection = object : ServiceConnection {
+
+            override fun onServiceConnected(name: ComponentName, service: IBinder) {
+                val binder = service as LocationUpdatesService.LocalBinder
+                mService = binder.getService()
+                mBound = true
+            }
+
+            override fun onServiceDisconnected(name: ComponentName) {
+                mService = null
+                mBound = false
+            }
+        }
         /**
          * Receiver for broadcasts sent by [LocationUpdatesService].
          */
@@ -99,7 +120,7 @@ class Tracker {
 
 
         @SuppressLint("MissingPermission", "NewApi")
-        fun sendDeviceToken(deviceToken : String?, context: Context) {
+       /* fun sendDeviceToken(deviceToken : String?, context: Context) {
 
             val telephonyManager = context.applicationContext.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
             val gpsDataPayload  = FireBasePayload()
@@ -115,7 +136,7 @@ class Tracker {
                     sendLogException(t)
                 }
             })
-        }
+        }*/
 
         private fun sendLogException(t: Throwable) {
             val call = LogsApi.create().sendLog(t.message.toString())
@@ -147,6 +168,7 @@ class Tracker {
                }*/
 
         }
+
     }
 
 

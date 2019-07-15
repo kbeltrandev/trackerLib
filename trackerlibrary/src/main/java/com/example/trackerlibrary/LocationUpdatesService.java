@@ -1,18 +1,4 @@
-/**
- * Copyright 2017 Google Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
 
 package com.example.trackerlibrary;
 
@@ -98,9 +84,9 @@ public class LocationUpdatesService extends Service {
     private final IBinder mBinder = new LocalBinder();
 
     /**
-     * The desired interval for location updates. Inexact. Updates may be more or less frequent.
+     * The desired interval for location updates. Inexact. Updates may be more or less frequent.  default example 1000
      */
-    private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 1000;
+    private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 300000;
 
     /**
      * The fastest rate for active location updates. Updates will never be more frequent
@@ -109,10 +95,6 @@ public class LocationUpdatesService extends Service {
     private static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2;
 
-    /**
-     * The identifier for the notification displayed for the foreground service.
-     */
-    private static final int NOTIFICATION_ID = 12345678;
 
     /**
      * Used to check whether the bound activity has really gone away and not unbound as part of an
@@ -156,6 +138,8 @@ public class LocationUpdatesService extends Service {
     @SuppressWarnings("deprecation")
     @Override
     public void onCreate() {
+
+
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         mLocationCallback = new LocationCallback() {
@@ -332,8 +316,8 @@ public class LocationUpdatesService extends Service {
         }
     }
 
+
     private void onNewLocation(Location location) {
-        Log.d(TAG, "New location: " + location);
 
         mLocation = location;
 
@@ -342,9 +326,7 @@ public class LocationUpdatesService extends Service {
         intent.putExtra(EXTRA_LOCATION, location);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
 
-        Realm.init(this);
-
-        Realm realm = Realm.getDefaultInstance();
+        Date formatedDate = null;
         Date currentTime = Calendar.getInstance().getTime();
 
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
@@ -353,7 +335,7 @@ public class LocationUpdatesService extends Service {
         convertedDate = formatter.format(currentTime);
 
         try {
-            Date currentDate = formatter.parse(convertedDate);
+            formatedDate = formatter.parse(convertedDate);
         } catch (ParseException e) {
             e.printStackTrace();
         }
@@ -363,39 +345,22 @@ public class LocationUpdatesService extends Service {
         lastLocation.setLongitude(location.getLongitude());
         lastLocation.setAltitude(location.getAltitude());
         lastLocation.setLongitude(location.getLongitude());
-        lastLocation.setGenerateDate(currentTime);
+        lastLocation.setGenerateDate(formatedDate);
 
+        saveToRealm(lastLocation);
+    }
 
+    private void saveToRealm( LocationRepository lastLocation) {
 
-        // Persist your data in a transaction
+        Realm.init(this);
+        Realm realm = Realm.getDefaultInstance();
+
         realm.beginTransaction();
-        //final Dog managedDog = realm.copyToRealm(dog); // Persist unmanaged objects
         final RealmResults<LocationRepository> queueLocations = realm.where(LocationRepository.class).findAll();
         queueLocations.deleteAllFromRealm();
         final LocationRepository locationLast = realm.copyToRealm(lastLocation);
-
         realm.commitTransaction();
-
-
-        // Update notification content if running as a foreground service.
-        if (serviceIsRunningInForeground(this)) {
-           // mNotificationManager.notify(NOTIFICATION_ID, getNotification());
-
-            // Getting location when notification was call.
-            latitude = location.getLatitude();
-            longitude = location.getLongitude();
-
-            // Here using to call Save to serverMethod
-            SavetoServer();
-
-
-        }
-
-
-
     }
-
-
 
     /**
      * Sets the location request parameters.
@@ -417,42 +382,6 @@ public class LocationUpdatesService extends Service {
         }
     }
 
-    /**
-     * Returns true if this is a foreground service.
-     *
-     * @param context The {@link Context}.
-     */
-    public boolean serviceIsRunningInForeground(Context context) {
-        ActivityManager manager = (ActivityManager) context.getSystemService(
-                Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(
-                Integer.MAX_VALUE)) {
-            if (getClass().getName().equals(service.service.getClassName())) {
-                if (service.foreground) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
 
-
-    /**
-     * Save a value in realtime to firestore when user in background
-     * For foreground you have to call same method to activity
-     * */
-
-    private void SavetoServer(){
-        Toast.makeText(this, "Save to server", Toast.LENGTH_SHORT).show();
-        Log.d("resMM", "Send to server");
-        Log.d("resML", String.valueOf(latitude));
-        Log.d("resMLL", String.valueOf(longitude));
-
-        Map<String , String> driverMap = new HashMap<>();
-
-        driverMap.put("name" , String.valueOf(latitude));
-        driverMap.put("email" , String.valueOf(longitude));
-
-    }
 }
 

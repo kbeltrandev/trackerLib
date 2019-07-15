@@ -40,6 +40,14 @@ class ActionReceiver : BroadcastReceiver() {
             override fun onResponse(call: Call<SimpleResponse>, response: Response<SimpleResponse>) {
                 if (response.code() == HttpURLConnection.HTTP_OK) {
                     Log.i("MENSAJE","200 ok post")
+
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    intent.data = Uri.parse(url)
+                    context.startActivity(intent)
+
+                    //This is used to close the notification tray
+                    val it = Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS)
+                    context.sendBroadcast(it)
                 }
             }
             override fun onFailure(call: Call<SimpleResponse>, t: Throwable) {
@@ -47,14 +55,6 @@ class ActionReceiver : BroadcastReceiver() {
             }
         })
 
-
-        val intent = Intent(Intent.ACTION_VIEW)
-        intent.data = Uri.parse(url)
-        context.startActivity(intent)
-
-        //This is used to close the notification tray
-        val it = Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS)
-        context.sendBroadcast(it)
     }
 
     fun performAction1() {

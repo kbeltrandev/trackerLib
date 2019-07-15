@@ -2,13 +2,11 @@ package com.example.trackerlibrary
 
 import android.annotation.SuppressLint
 import android.app.Service
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.location.Location
-import android.location.LocationManager
-import android.os.Binder
-import android.os.Handler
-import android.os.IBinder
 import android.util.Log
 import com.example.trackerlibrary.Background.ForegroundServicesNotification
 import com.example.trackerlibrary.Core.Settings
@@ -19,21 +17,20 @@ import retrofit2.Response
 import java.net.HttpURLConnection
 import android.telephony.TelephonyManager
 import com.example.trackerlibrary.Service.Response.FireBaseTackerResponse
-import android.os.BatteryManager
 import com.example.trackerlibrary.Service.FireBasePayload
 import java.util.Locale.*
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
+import android.os.*
 import com.example.trackerlibrary.PushNotifications.PushGenerator
 import com.example.trackerlibrary.Service.LogsApi
 import com.example.trackerlibrary.Service.Response.SimpleResponse
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.android.gms.tasks.Task
 import io.realm.Realm
-import io.realm.RealmConfiguration
-import io.realm.annotations.RealmModule
+import com.google.gson.JsonObject
+import com.google.gson.Gson
+import org.json.JSONObject
 
 
 class TrackerService : Service() {
@@ -42,9 +39,12 @@ class TrackerService : Service() {
      * Provides access to the Fused LocationBackground Provider API.
      */
     private var mFusedLocationClient: FusedLocationProviderClient? = null
+    // A reference to the service used to get location updates.
+    private var mService: LocationUpdatesService? = null
 
     private var handler: Handler? = null
     private var runnable: Runnable? = null
+
 
     inner class TestServiceBinder : Binder() {
         val service: TrackerService
@@ -94,6 +94,7 @@ class TrackerService : Service() {
                 sendGpsMessage(lastLocation)
             }
         }*/
+
         sendGpsMessage()
         handler!!.removeCallbacks(runnable)
         resume()
@@ -101,114 +102,65 @@ class TrackerService : Service() {
 
 
     @SuppressLint("MissingPermission", "NewApi")
-    private fun sendGpsMessage() {
-
-        try {
-
-            Realm.init(this)
+    private fun sendGpsMessage() = try {
 
 
-            val realm = Realm.getDefaultInstance()
-            // Persist your data in a transaction
-            realm.beginTransaction()
-            //final Dog managedDog = realm.copyToRealm(dog); // Persist unmanaged objects
-            val queueLocations = realm.where(LocationRepository::class.java).findAll()
-            realm.commitTransaction()
+        val realm = Realm.getDefaultInstance()
+        // Persist your data in a transaction
+        realm.beginTransaction()
+        //final Dog managedDog = realm.copyToRealm(dog); // Persist unmanaged objects
+        val queueLocations = realm.where(LocationRepository::class.java).findAll()
+        realm.commitTransaction()
 
-            val telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-            val batteryManager = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-            val bundle = packageManager.getApplicationInfo(this.getPackageName(), PackageManager.GET_META_DATA).metaData
+        val telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+        val batteryManager = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+        val bundle = packageManager.getApplicationInfo(this.getPackageName(), PackageManager.GET_META_DATA).metaData
 
-            val gpsDataPayload  = FireBasePayload()
+        val jsonCustomProperties = JsonObject()
+        jsonCustomProperties.addProperty("edad", "29")
+        jsonCustomProperties.addProperty("telefono", "3015002772")
+        jsonCustomProperties.addProperty("sexo", "F")
 
-            gpsDataPayload.deviceid = telephonyManager.imei
-            gpsDataPayload.appid = bundle.getString("tracker.Apikey")
-            gpsDataPayload.latitude = queueLocations.get(0)!!.latitude
-            gpsDataPayload.longitude = queueLocations.get(0)!!.longitude
-            gpsDataPayload.speed = queueLocations.get(0)!!.speed!!
-            gpsDataPayload.altitude = queueLocations.get(0)!!.altitude!!
-            gpsDataPayload.batteryPercentage = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-            gpsDataPayload.device = android.os.Build.MANUFACTURER
-            gpsDataPayload.deviceModel = android.os.Build.MODEL
-            gpsDataPayload.osVersion = android.os.Build.VERSION.RELEASE
-            gpsDataPayload.deviceLanguage = getDefault().displayLanguage
-            gpsDataPayload.networkOperator = telephonyManager.networkOperatorName
-            gpsDataPayload.reg = queueLocations.get(0)!!.generateDate
+        val customProperties = Gson().toJson(jsonCustomProperties)
 
+        val gpsDataPayload = FireBasePayload()
 
-            val call = TrackerApi.create().sendGpsPayload(gpsDataPayload)
-            call.enqueue(object : Callback<FireBaseTackerResponse> {
-                override fun onResponse(call: Call<FireBaseTackerResponse>, response: Response<FireBaseTackerResponse>) {
-                    if (response.code() == HttpURLConnection.HTTP_OK) {
-                        Log.i("MENSAJE","200 ok post")
-
-                        gpsDataPayload.idcampaign =  response.body()!!.response.id
-
-                        val hasMessage =  response.body()!!.response.mostrarMensaje
-                        if(hasMessage!!.toBoolean()) {
-                            sendPushMessage(response.body()!!, gpsDataPayload)
-                        }
-
-                    }
-                }
-                override fun onFailure(call: Call<FireBaseTackerResponse>, t: Throwable) {
-                    sendLogException(t)
-                }
-            })
-        }
-        catch (e : Exception){
-            sendLogException(e)
-        }
-    }
-
-    @SuppressLint("MissingPermission", "NewApi")
-    private fun sendGpsMessage(lastLocation : Location) {
-
-        try {
-            val telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-            val batteryManager = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-            val bundle = packageManager.getApplicationInfo(this.getPackageName(), PackageManager.GET_META_DATA).metaData
-
-            val gpsDataPayload  = FireBasePayload()
-
-            gpsDataPayload.deviceid = telephonyManager.imei
-            gpsDataPayload.appid = bundle.getString("tracker.Apikey")
-            gpsDataPayload.latitude = lastLocation.latitude
-            gpsDataPayload.longitude = lastLocation.longitude
-            gpsDataPayload.speed = lastLocation.speed
-            gpsDataPayload.altitude = lastLocation.altitude
-            gpsDataPayload.batteryPercentage = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-            gpsDataPayload.device = android.os.Build.MANUFACTURER
-            gpsDataPayload.deviceModel = android.os.Build.MODEL
-            gpsDataPayload.osVersion = android.os.Build.VERSION.RELEASE
-            gpsDataPayload.deviceLanguage = getDefault().displayLanguage
-            gpsDataPayload.networkOperator = telephonyManager.networkOperatorName
+        gpsDataPayload.deviceid = telephonyManager.imei
+        gpsDataPayload.appid = bundle.getString("tracker.Apikey")
+        gpsDataPayload.latitude = queueLocations.get(0)!!.latitude
+        gpsDataPayload.longitude = queueLocations.get(0)!!.longitude
+        gpsDataPayload.device = Build.MANUFACTURER
+        gpsDataPayload.deviceModel = Build.MODEL
+        gpsDataPayload.networkOperator = telephonyManager.networkOperatorName
+        gpsDataPayload.reg = queueLocations.get(0)!!.generateDate
+        gpsDataPayload.customProperties = jsonCustomProperties
+        gpsDataPayload.deviceType = "Android"
 
 
-            val call = TrackerApi.create().sendGpsPayload(gpsDataPayload)
-            call.enqueue(object : Callback<FireBaseTackerResponse> {
-                override fun onResponse(call: Call<FireBaseTackerResponse>, response: Response<FireBaseTackerResponse>) {
-                    if (response.code() == HttpURLConnection.HTTP_OK) {
-                        Log.i("MENSAJE","200 ok post")
 
-                       gpsDataPayload.idcampaign =  response.body()!!.response.id
-
+        val call = TrackerApi.create().sendGpsPayload(gpsDataPayload)
+        call.enqueue(object : Callback<FireBaseTackerResponse> {
+            override fun onResponse(call: Call<FireBaseTackerResponse>, response: Response<FireBaseTackerResponse>) {
+                if (response.code() == HttpURLConnection.HTTP_OK) {
+                    Log.i("MENSAJE","200 ok post")
+                    gpsDataPayload.idcampaign =  response.body()!!.response.id
                     val hasMessage =  response.body()!!.response.mostrarMensaje
-                        if(hasMessage!!.toBoolean()) {
-                            sendPushMessage(response.body()!!, gpsDataPayload)
-                        }
-
+                    if(hasMessage!!.toBoolean()) {
+                        sendPushMessage(response.body()!!, gpsDataPayload)
                     }
+
                 }
-                override fun onFailure(call: Call<FireBaseTackerResponse>, t: Throwable) {
-                    sendLogException(t)
-                }
-            })
-        }
-         catch (e : Exception){
-            sendLogException(e)
-        }
+            }
+            override fun onFailure(call: Call<FireBaseTackerResponse>, t: Throwable) {
+                sendLogException(t)
+            }
+        })
     }
+    catch (e : Exception){
+        sendLogException(e)
+    }
+
+
 
     private fun sendLogException(t: Throwable) {
         val call = LogsApi.create().sendLog(t.message.toString())
